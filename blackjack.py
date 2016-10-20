@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from random import randint
+from random import choice
 
 class Deck(object):
 
@@ -119,10 +119,9 @@ class Deck(object):
 				self.contents = contents
 
 		def deal_card(self):
-				key = randint(1,len(self.contents))
-				hit_card = self.contents[key][0]
-				return hit_card, key
-				self.contents.pop(key)
+				key = choice(self.contents.keys())
+				card_and_value = self.contents.pop(key)
+				return key, card_and_value
 				
 # Player class for creating players for the Blackjack game
 class Player(object):
@@ -155,7 +154,31 @@ class Hand(object):
 				self.contents.append(card)
 
 		def get_hand(self):
+				return self.contents
+		
+		def get_score(self):
+				score = [0,0]
+				ace_counter = False
 				print self.contents
+				for count in self.contents:
+						if count[0].startswith('Ace'):
+								score[0]+=1
+								score[1]+=11
+								ace_counter = True
+						else:
+								print count[1]
+								print type(count[1])
+								score[0]+=int(count[1])
+								score[1]+=int(count[1])
+				
+				return score
+			
+'''				
+				if ace_counter:
+						print "Your hand is currently a %s or a %s." % score[0], score[1]
+				else:
+						print "Your hand is currently a %s." % score[0]
+'''
 
 # PlayerHand class for creating hands for players
 class PlayerHand(Hand):
@@ -179,19 +202,39 @@ class DealerHand(Hand):
 				
 def deal_cards(deck, player_hand, dealer_hand, players=1):
 		for x in range(1, players * 2 + 3):
-				hit_card, key = deck.deal_card()
-				deck.contents.pop(key)
+				key, hit_card_and_value = deck.deal_card()
+				hit_card = hit_card_and_value[0]
+		#		deck.contents.pop(key)
 				if x % 2 == 1:
-						player_hand.add_card(hit_card)
+						player_hand.add_card(hit_card_and_value)
 						print "You've been dealt a %s!" % hit_card
 				else:
-						dealer_hand.add_card(hit_card)
+						dealer_hand.add_card(hit_card_and_value)
 
 def hit(deck, hand):
-		hit_card, key = deck.deal_card()
-		deck.contents.pop(key)
-		hand.add_card(hit_card)
+		key, hit_card_and_value = deck.deal_card()
+		hit_card = hit_card_and_value[0]
+#		deck.contents.pop(key)
+		hand.add_card(hit_card_and_value)
 		print "You hit a %s!" % hit_card
+
+def check_blackjack(hand):
+		print hand
+		card1 = hand[0][0]
+		card2 = hand[1][0]
+		
+		if card1.startswith('Ace') and (card2.startswith('Ten') or\
+				card2.startswith('Jack') or card2.startswith('Queen') or\
+				card2.startswith('King')):
+				print "Blackjack!"
+				return True
+		elif card2.startswith('Ace') and (card1.startswith('Ten') or\
+				card1.startswith('Jack') or card1.startswith('Queen') or\
+				card1.startswith('King')):
+				print "Blackjack!"
+				return True
+		else:
+				return False
 
 nick = Player()
 nick.add_bankroll(1000)
@@ -204,7 +247,12 @@ dealer_hand = DealerHand()
 
 deal_cards(deck, player_hand, dealer_hand)
 print deck.contents
+
 player_hand.get_hand()
+dealer_hand.get_hand()
+
+check_blackjack(player_hand.get_hand())
+check_blackjack(dealer_hand.get_hand())
 
 hit(deck, player_hand)
-print len(deck.contents)
+
