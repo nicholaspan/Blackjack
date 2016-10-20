@@ -160,6 +160,9 @@ class Hand(object):
 				score = [0,0]
 				ace_counter = False
 				for count in self.contents:
+				
+				# NEED TO FIGURE OUT HOW TO ACCOUNT FOR TWO ACES...
+
 						if count[0].startswith('Ace'):
 								score[0]+=1
 								score[1]+=11
@@ -207,12 +210,12 @@ def deal_cards(deck, player_hand, dealer_hand, players=1):
 				else:
 						dealer_hand.add_card(hit_card_and_value)
 
-def hit(deck, hand):
+def hit(deck, hand, player):
 		key, hit_card_and_value = deck.deal_card()
 		hit_card = hit_card_and_value[0]
 #		deck.contents.pop(key)
 		hand.add_card(hit_card_and_value)
-		print "You hit a %s!" % hit_card
+		print "%s hit a %s!" % (player, hit_card)
 
 def check_blackjack(hand):
 		card1 = hand[0][0]
@@ -268,57 +271,95 @@ while game_on:
 
 		print
 		print "Your current hand is: %s" % get_cards(player_hand)	
-		if player_hand.get_score()[0] == player_hand.get_score()[1]:
-				print "Your current score is %s." % player_hand.get_score()[0]
-		else:
-				print "Your current score is either %s or %s." % player_hand.get_score()[0], \
-						player_hand.get_score()[1]
-		print "The dealer is showing a %s" % get_cards(dealer_hand)[1]
 		print
+		
 		print "Checking for blackjacks..."
 
 		if check_blackjack(player_hand.get_hand()) and \
 				check_blackjack(dealer_hand.get_hand()):
 					print "Both you and the dealer had a Blackjack!"
+					print "The dealer flips over his hand: %s." % get_cards(dealer_hand)	
+					break
 		elif check_blackjack(player_hand.get_hand()):
 					print "You got a blackjack, congratulations!"
+					break
 		elif check_blackjack(dealer_hand.get_hand()):
 					print "The dealer got blackjack, sorry you have lost!"
+					break
 		else:
 					print "No blackjacks!"
-		
 		print
 
+		print "Your current hand is: %s" % get_cards(player_hand)	
+		
+		if player_hand.get_score()[0] == player_hand.get_score()[1]:
+				print "Your current score is %s." % player_hand.get_score()[0]
+		else:
+				print "Your current score is either %s or %s." % (player_hand.get_score()[0], \
+						player_hand.get_score()[1])
+		print "The dealer is showing a %s" % get_cards(dealer_hand)[1]
+		
 		hit_count = True
 		while hit_count:
+				print
 				answer = raw_input("Would you like to hit or stay? 'H' or 'S'")
 				if answer.upper() == 'H':
-						hit(deck, player_hand)						
+						hit(deck, player_hand, 'You')						
 						print "Your current hand is: %s" % get_cards(player_hand)	
 						
 						if player_hand.get_score()[0] == player_hand.get_score()[1]:
 								print "Your current score is %s." % player_hand.get_score()[0]
 						else:
-								print "Your current score is either %s or %s." % player_hand.get_score()[0], \
-										player_hand.get_score()[1]
+								if player_hand.get_score()[1] < 22:
+										print "Your current score is either %s or %s." % \
+												(player_hand.get_score()[0], player_hand.get_score()[1])
+								else:
+										print "Your current score is %s." % player_hand.get_score()[0]
 						
 						if check_bust(player_hand):
+								print
 								print "You have busted! You lose!"
 								break
-							
+									
 				elif answer.upper() == 'S':
 						print "You have chosen to stay..."
+						if player_hand.get_score()[1] < 22:
+								player_score = player_hand.get_score()[1]
+						else:
+								player_score = player_hand.get_score()[0]
+
 						print "The dealer's hand is: %s" % get_cards(dealer_hand)
 						if dealer_hand.get_score()[0] == dealer_hand.get_score()[1]:
 								print "Dealer's current score is %s." % dealer_hand.get_score()[0]
 								dealer_score = dealer_hand.get_score()[0]
 						else:
 								print "Dealer's current score is either %s or %s." % \
-										dealer_hand.get_score()[0], dealer_hand.get_score()[1]
+										(dealer_hand.get_score()[0], dealer_hand.get_score()[1])
 								dealer_score = [dealer_hand.get_score()[0], dealer_hand.get_score()[1]]
-						print dealer_score
-						
+						if type(dealer_score) == int:
+								while dealer_score < 17:
+										hit(deck, dealer_hand, 'Dealer')
+										print "Dealer's current score is %s." % dealer_hand.get_score()[0]
+										dealer_score = dealer_hand.get_score()[0]
+								if check_bust(dealer_hand):
+										print
+										print "The dealer has busted! You win!"
+								else:
+										if player_score > dealer_score:
+													print
+													print "You have won! %s to %s" % (player_score, dealer_score)
+										elif player_score == dealer_score:			
+													print	
+													print "You and the dealer have tied! %s to %s" % \
+															(dealer_score, player_score)
+										else:			
+													print
+													print "The dealer has beaten you! %s to %s" % \
+															(dealer_score, player_hand.get_score()[0])
+						else:
+								pass			 
+						hit_count = False
 				else:
 						print "Please enter a valid option..."
-		
+				
 		game_on = False
